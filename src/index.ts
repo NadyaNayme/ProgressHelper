@@ -129,6 +129,9 @@ function statusUpdate() {
 			alerted = true;
 		}
 	}
+	if (lastValues[0] == 24 && lastValues[4] == 24) {
+		attempts = 0;
+	}
 	// When we start a new item find the heat bar and allow the alert again
 	if (lastValues[0] !== 147 && lastValues[5] !== 147 && alerted) {
 		alerted = false;

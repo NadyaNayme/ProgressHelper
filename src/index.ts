@@ -26,6 +26,7 @@ var progressBars = a1lib.webpackImages({
 	heat_bar: require('./asset/data/heat_bar.data.png'),
 });
 
+let attempts = 0;
 let alerted = false;
 let lastValues = [44];
 
@@ -42,6 +43,13 @@ let lastKnownHeatBarposition;
 let lastKnownProgressBarPosition;
 
 function tryFindProgressBar() {
+	if (attempts == 8) {
+		lastKnownProgressBarPosition = undefined;
+		alt1.overLayClearGroup('ProgressBar');
+		alt1.overLaySetGroup('MustRestart');
+		alt1.overLayText('Must reset Progress Helper', a1lib.mixColor(255,255,255), 20, 30, 30, 10000);
+		return;
+	}
 	let client_screen = a1lib.captureHoldFullRs();
 
 	let startOfBar = {
@@ -60,11 +68,15 @@ function tryFindProgressBar() {
 
 		lastKnownHeatBarposition = heatBarposition;
 		lastKnownProgressBarPosition = progressBarPosition;
-		alt1.overLayClearGroup('ProgressBar');
+		attempts = 0;
 	}
+	alt1.overLayClearGroup('ProgressBar');
 	if (lastKnownProgressBarPosition === undefined) {
 		setTimeout(() => {
-			tryFindProgressBar();
+			if (attempts <= 8) {
+				tryFindProgressBar();
+				attempts++;
+			}
 		}, 1000);
 	}
 }
@@ -81,24 +93,26 @@ function statusUpdate() {
 			4
 		)
 		.read();
-	alt1.overLaySetGroup('ProgressBar');
-	alt1.overLayRect(
-		a1lib.mixColor(0, 255, 0),
-		lastKnownProgressBarPosition.x - 3,
-		lastKnownProgressBarPosition.y - 5,
-		56,
-		4,
-		3000,
-		1
-	);
-	alt1.overLayRefreshGroup('ProgerssBar');
 	if (lastValues.length > 5) {
+		alt1.overLayClearGroup('ProgressBar');
+		alt1.overLaySetGroup('ProgressBar');
+		alt1.overLayRect(
+			a1lib.mixColor(0, 255, 0),
+			lastKnownProgressBarPosition.x - 3,
+			lastKnownProgressBarPosition.y - 5,
+			56,
+			4,
+			3000,
+			1
+		);
+		alt1.overLayRefreshGroup('ProgerssBar');
 		lastValues.shift();
 	}
-	console.log(lastValues);
+
 	lastValues.push(progressBar.getPixel(44, 2)[0]);
 
 	if (lastValues[0] == 147 && lastValues[4] == 147) {
+		alt1.overLayClearGroup('ProgressBar');
 		alt1.overLaySetGroup('ProgressBar');
 		alt1.overLayRect(
 			a1lib.mixColor(255, 0, 0),
@@ -122,8 +136,12 @@ function statusUpdate() {
 }
 
 function checkProgressBar() {
-	if (!alerted && lastValues[0] !== 24 && lastValues[5] !== 24) {
-		console.log('Trying to find heat bar...');
+	if (
+		!alerted &&
+		lastValues[0] !== 24 &&
+		lastValues[5] !== 24 &&
+		attempts <= 8
+	) {
 		tryFindProgressBar();
 	}
 }

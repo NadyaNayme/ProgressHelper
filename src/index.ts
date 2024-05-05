@@ -124,6 +124,30 @@ export function startApp() {
 	setInterval(tryFindProgressBar, 1000);
 }
 
+function checkVersion(version: string) {
+	fetch('./version.json', {
+		method: 'GET',
+		headers: {
+			'Content-type': 'application/json; charset=UTF-8',
+		},
+	})
+		.then((res) => {
+			let latestVersion = res.json();
+			return latestVersion;
+		})
+		.then((latestVersion) => {
+			if (version != latestVersion.version) {
+				helperItems.Output.innerHTML = `<p>App is out of date. Expected version: ${latestVersion.version} ; found: ${version} - reloading in 3 seconds to update...</p>`;
+				setTimeout(() => {}, 3000);
+				location.reload();
+			} else {
+				console.log(
+					`App is running latest version. Expected version: ${latestVersion.version} ; found: ${version}`
+				);
+			}
+		});
+}
+
 const settingsObject = {
 	settingsHeader: sauce.createHeading('h2', 'Settings'),
 	volume: sauce.createRangeSetting('volume', 'Volume', {
@@ -144,6 +168,10 @@ window.onload = function () {
 		//tell alt1 about the app
 		//this makes alt1 show the add app button when running inside the embedded browser
 		//also updates app settings if they are changed
+		checkVersion('0.0.2');
+		setInterval(() => {
+			checkVersion('0.0.2');
+		}, 1000 * 60 * 2);
 
 		alt1.identifyAppUrl('./appconfig.json');
 		Object.values(settingsObject).forEach((val) => {

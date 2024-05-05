@@ -3479,7 +3479,7 @@ module.exports = __WEBPACK_EXTERNAL_MODULE_sharp__;
 /******/ 				var scripts = document.getElementsByTagName("script");
 /******/ 				if(scripts.length) {
 /******/ 					var i = scripts.length - 1;
-/******/ 					while (i > -1 && (!scriptUrl || !/^http(s?):/.test(scriptUrl))) scriptUrl = scripts[i--].src;
+/******/ 					while (i > -1 && !scriptUrl) scriptUrl = scripts[i--].src;
 /******/ 				}
 /******/ 			}
 /******/ 		}
@@ -3626,6 +3626,28 @@ function startApp() {
     }
     setInterval(tryFindProgressBar, 1000);
 }
+function checkVersion(version) {
+    fetch('./version.json', {
+        method: 'GET',
+        headers: {
+            'Content-type': 'application/json; charset=UTF-8',
+        },
+    })
+        .then(function (res) {
+        var latestVersion = res.json();
+        return latestVersion;
+    })
+        .then(function (latestVersion) {
+        if (version != latestVersion.version) {
+            helperItems.Output.innerHTML = "<p>App is out of date. Expected version: ".concat(latestVersion.version, " ; found: ").concat(version, " - reloading in 3 seconds to update...</p>");
+            setTimeout(function () { }, 3000);
+            location.reload();
+        }
+        else {
+            console.log("App is running latest version. Expected version: ".concat(latestVersion.version, " ; found: ").concat(version));
+        }
+    });
+}
 var settingsObject = {
     settingsHeader: _a1sauce__WEBPACK_IMPORTED_MODULE_0__.createHeading('h2', 'Settings'),
     volume: _a1sauce__WEBPACK_IMPORTED_MODULE_0__.createRangeSetting('volume', 'Volume', {
@@ -3644,6 +3666,10 @@ window.onload = function () {
         //tell alt1 about the app
         //this makes alt1 show the add app button when running inside the embedded browser
         //also updates app settings if they are changed
+        checkVersion('0.0.2');
+        setInterval(function () {
+            checkVersion('0.0.2');
+        }, 1000 * 60 * 2);
         alt1.identifyAppUrl('./appconfig.json');
         Object.values(settingsObject).forEach(function (val) {
             helperItems.settings.before(val);

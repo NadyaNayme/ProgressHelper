@@ -3562,20 +3562,14 @@ var helperItems = {
 var progressBars = alt1__WEBPACK_IMPORTED_MODULE_5__.webpackImages({
     heat_bar: __webpack_require__(/*! ./asset/data/heat_bar.data.png */ "./asset/data/heat_bar.data.png"),
 });
-var spokeRecently = false;
-function ttsSpeak() {
-    console.log('Progress alert!');
+var alerted = false;
+var lastValues = [44];
+function alertSwitchHammers() {
     var ttsAlarm = new SpeechSynthesisUtterance();
     ttsAlarm.text = 'Switch hammers';
     ttsAlarm.volume = played_audio.volume;
-    if (!spokeRecently) {
-        window.speechSynthesis.cancel();
-        window.speechSynthesis.speak(ttsAlarm);
-        spokeRecently = true;
-        setTimeout(function () {
-            spokeRecently = false;
-        }, 20000);
-    }
+    window.speechSynthesis.cancel();
+    window.speechSynthesis.speak(ttsAlarm);
 }
 var lastKnownHeatBarposition;
 var lastKnownProgressBarPosition;
@@ -3593,20 +3587,49 @@ function tryFindProgressBar() {
             x: startOfBar.progressBar[0].x,
             y: startOfBar.progressBar[0].y - 2,
         };
-        console.log(heatBarposition);
         lastKnownHeatBarposition = heatBarposition;
         lastKnownProgressBarPosition = progressBarPosition;
+        alt1.overLayClearGroup('ProgressBar');
+    }
+    if (lastKnownProgressBarPosition === undefined) {
+        setTimeout(function () {
+            tryFindProgressBar();
+        }, 1000);
+    }
+}
+function statusUpdate() {
+    if (lastKnownProgressBarPosition === undefined) {
+        return;
     }
     var progressBar = alt1__WEBPACK_IMPORTED_MODULE_5__.captureHold(lastKnownProgressBarPosition.x - 3, lastKnownProgressBarPosition.y - 5, 56, 4)
         .read();
     alt1.overLaySetGroup('ProgressBar');
-    alt1.overLayRect(alt1__WEBPACK_IMPORTED_MODULE_5__.mixColor(255, 255, 255), lastKnownProgressBarPosition.x - 3, lastKnownProgressBarPosition.y - 5, 56, 4, 3000, 1);
+    alt1.overLayRect(alt1__WEBPACK_IMPORTED_MODULE_5__.mixColor(0, 255, 0), lastKnownProgressBarPosition.x - 3, lastKnownProgressBarPosition.y - 5, 56, 4, 3000, 1);
     alt1.overLayRefreshGroup('ProgerssBar');
-    console.log(progressBar.getPixel(44, 2));
-    if (progressBar.getPixel(44, 2)[0] == 147) {
-        ttsSpeak();
+    if (lastValues.length > 5) {
+        lastValues.shift();
     }
-    return;
+    console.log(lastValues);
+    lastValues.push(progressBar.getPixel(44, 2)[0]);
+    if (lastValues[0] == 147 && lastValues[4] == 147) {
+        alt1.overLaySetGroup('ProgressBar');
+        alt1.overLayRect(alt1__WEBPACK_IMPORTED_MODULE_5__.mixColor(255, 0, 0), lastKnownProgressBarPosition.x - 3, lastKnownProgressBarPosition.y - 5, 56, 4, 3000, 1);
+        alt1.overLayRefreshGroup('ProgerssBar');
+        if (!alerted) {
+            alertSwitchHammers();
+            alerted = true;
+        }
+    }
+    // When we start a new item find the heat bar and allow the alert again
+    if (lastValues[0] !== 147 && lastValues[5] !== 147 && alerted) {
+        alerted = false;
+    }
+}
+function checkProgressBar() {
+    if (!alerted && lastValues[0] !== 24 && lastValues[5] !== 24) {
+        console.log('Trying to find heat bar...');
+        tryFindProgressBar();
+    }
 }
 var played_audio = {
     volume: 100,
@@ -3624,29 +3647,9 @@ function startApp() {
         helperItems.Output.insertAdjacentHTML('beforeend', "<div><p>Attempted to use Overlay but app overlay permission is not enabled. Please enable \"Show Overlay\" permission in Alt1 settinsg (wrench icon in corner).</p></div>");
         return;
     }
-    setInterval(tryFindProgressBar, 1000);
-}
-function checkVersion(version) {
-    fetch('./version.json', {
-        method: 'GET',
-        headers: {
-            'Content-type': 'application/json; charset=UTF-8',
-        },
-    })
-        .then(function (res) {
-        var latestVersion = res.json();
-        return latestVersion;
-    })
-        .then(function (latestVersion) {
-        if (version != latestVersion.version) {
-            helperItems.Output.innerHTML = "<p>App is out of date. Expected version: ".concat(latestVersion.version, " ; found: ").concat(version, " - reloading in 3 seconds to update...</p>");
-            setTimeout(function () { }, 3000);
-            location.reload();
-        }
-        else {
-            console.log("App is running latest version. Expected version: ".concat(latestVersion.version, " ; found: ").concat(version));
-        }
-    });
+    tryFindProgressBar();
+    setInterval(statusUpdate, 200);
+    setInterval(checkProgressBar, 3000);
 }
 var settingsObject = {
     settingsHeader: _a1sauce__WEBPACK_IMPORTED_MODULE_0__.createHeading('h2', 'Settings'),
@@ -3666,10 +3669,6 @@ window.onload = function () {
         //tell alt1 about the app
         //this makes alt1 show the add app button when running inside the embedded browser
         //also updates app settings if they are changed
-        checkVersion('0.0.4');
-        setInterval(function () {
-            checkVersion('0.0.4');
-        }, 1000 * 60 * 2);
         alt1.identifyAppUrl('./appconfig.json');
         Object.values(settingsObject).forEach(function (val) {
             helperItems.settings.before(val);

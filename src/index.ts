@@ -26,21 +26,15 @@ var progressBars = a1lib.webpackImages({
 	heat_bar: require('./asset/data/heat_bar.data.png'),
 });
 
-let spokeRecently = false;
+let alerted = false;
+let lastValues = [44];
 
-function ttsSpeak() {
-	console.log('Progress alert!');
+function alertSwitchHammers() {
 	var ttsAlarm = new SpeechSynthesisUtterance();
 	ttsAlarm.text = 'Switch hammers';
 	ttsAlarm.volume = played_audio.volume;
-	if (!spokeRecently) {
-		window.speechSynthesis.cancel();
-		window.speechSynthesis.speak(ttsAlarm);
-		spokeRecently = true;
-		setTimeout(() => {
-			spokeRecently = false;
-		}, 20000);
-	}
+	window.speechSynthesis.cancel();
+	window.speechSynthesis.speak(ttsAlarm);
 }
 
 
@@ -63,11 +57,22 @@ function tryFindProgressBar() {
 			x: startOfBar.progressBar[0].x,
 			y: startOfBar.progressBar[0].y - 2,
 		};
-		console.log(heatBarposition);
+
 		lastKnownHeatBarposition = heatBarposition;
 		lastKnownProgressBarPosition = progressBarPosition;
+		alt1.overLayClearGroup('ProgressBar');
 	}
+	if (lastKnownProgressBarPosition === undefined) {
+		setTimeout(() => {
+			tryFindProgressBar();
+		}, 1000);
+	}
+}
 
+function statusUpdate() {
+	if (lastKnownProgressBarPosition === undefined) {
+		return
+	}
 	let progressBar = a1lib
 		.captureHold(
 			lastKnownProgressBarPosition.x - 3,
@@ -76,9 +81,27 @@ function tryFindProgressBar() {
 			4
 		)
 		.read();
+	alt1.overLaySetGroup('ProgressBar');
+	alt1.overLayRect(
+		a1lib.mixColor(0, 255, 0),
+		lastKnownProgressBarPosition.x - 3,
+		lastKnownProgressBarPosition.y - 5,
+		56,
+		4,
+		3000,
+		1
+	);
+	alt1.overLayRefreshGroup('ProgerssBar');
+	if (lastValues.length > 5) {
+		lastValues.shift();
+	}
+	console.log(lastValues);
+	lastValues.push(progressBar.getPixel(44, 2)[0]);
+
+	if (lastValues[0] == 147 && lastValues[4] == 147) {
 		alt1.overLaySetGroup('ProgressBar');
 		alt1.overLayRect(
-			a1lib.mixColor(255, 255, 255),
+			a1lib.mixColor(255, 0, 0),
 			lastKnownProgressBarPosition.x - 3,
 			lastKnownProgressBarPosition.y - 5,
 			56,
@@ -87,12 +110,24 @@ function tryFindProgressBar() {
 			1
 		);
 		alt1.overLayRefreshGroup('ProgerssBar');
-	console.log(progressBar.getPixel(44, 2));
-	if (progressBar.getPixel(44, 2)[0] == 147) {
-		ttsSpeak();
+		if (!alerted) {
+			alertSwitchHammers();
+			alerted = true;
+		}
 	}
-	return
+	// When we start a new item find the heat bar and allow the alert again
+	if (lastValues[0] !== 147 && lastValues[5] !== 147 && alerted) {
+		alerted = false;
+	}
 }
+
+function checkProgressBar() {
+	if (!alerted && lastValues[0] !== 24 && lastValues[5] !== 24) {
+		console.log('Trying to find heat bar...');
+		tryFindProgressBar();
+	}
+}
+
 
 let played_audio = {
 	volume: 100,
@@ -121,31 +156,9 @@ export function startApp() {
 		return;
 	}
 
-	setInterval(tryFindProgressBar, 1000);
-}
-
-function checkVersion(version: string) {
-	fetch('./version.json', {
-		method: 'GET',
-		headers: {
-			'Content-type': 'application/json; charset=UTF-8',
-		},
-	})
-		.then((res) => {
-			let latestVersion = res.json();
-			return latestVersion;
-		})
-		.then((latestVersion) => {
-			if (version != latestVersion.version) {
-				helperItems.Output.innerHTML = `<p>App is out of date. Expected version: ${latestVersion.version} ; found: ${version} - reloading in 3 seconds to update...</p>`;
-				setTimeout(() => {}, 3000);
-				location.reload();
-			} else {
-				console.log(
-					`App is running latest version. Expected version: ${latestVersion.version} ; found: ${version}`
-				);
-			}
-		});
+	tryFindProgressBar();
+	setInterval(statusUpdate, 200);
+	setInterval(checkProgressBar, 3000);
 }
 
 const settingsObject = {
@@ -168,10 +181,6 @@ window.onload = function () {
 		//tell alt1 about the app
 		//this makes alt1 show the add app button when running inside the embedded browser
 		//also updates app settings if they are changed
-		checkVersion('0.0.4');
-		setInterval(() => {
-			checkVersion('0.0.4');
-		}, 1000 * 60 * 2);
 
 		alt1.identifyAppUrl('./appconfig.json');
 		Object.values(settingsObject).forEach((val) => {

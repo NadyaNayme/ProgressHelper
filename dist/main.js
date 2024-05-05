@@ -3571,11 +3571,13 @@ function alertSwitchHammers() {
     ttsAlarm.volume = played_audio.volume;
     window.speechSynthesis.cancel();
     window.speechSynthesis.speak(ttsAlarm);
+    attempts = 0;
 }
 var lastKnownHeatBarposition;
 var lastKnownProgressBarPosition;
 function tryFindProgressBar() {
-    if (attempts == 8) {
+    console.log(attempts);
+    if (attempts == 5) {
         lastKnownProgressBarPosition = undefined;
         alt1.overLayClearGroup('ProgressBar');
         alt1.overLaySetGroup('MustRestart');
@@ -3597,14 +3599,12 @@ function tryFindProgressBar() {
         };
         lastKnownHeatBarposition = heatBarposition;
         lastKnownProgressBarPosition = progressBarPosition;
-        attempts = 0;
     }
     alt1.overLayClearGroup('ProgressBar');
     if (lastKnownProgressBarPosition === undefined) {
         setTimeout(function () {
             if (attempts <= 8) {
                 tryFindProgressBar();
-                attempts++;
             }
         }, 1000);
     }
@@ -3633,6 +3633,9 @@ function statusUpdate() {
             alerted = true;
         }
     }
+    if (lastValues[0] == 24 && lastValues[4] == 24) {
+        attempts = 0;
+    }
     // When we start a new item find the heat bar and allow the alert again
     if (lastValues[0] !== 147 && lastValues[5] !== 147 && alerted) {
         alerted = false;
@@ -3642,8 +3645,9 @@ function checkProgressBar() {
     if (!alerted &&
         lastValues[0] !== 24 &&
         lastValues[5] !== 24 &&
-        attempts <= 8) {
+        attempts <= 5) {
         tryFindProgressBar();
+        attempts++;
     }
 }
 var played_audio = {

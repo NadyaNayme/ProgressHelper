@@ -3614,9 +3614,6 @@ function checkFocusWindow() {
         window.speechSynthesis.cancel();
         spokeRecently = true;
     }
-    else {
-        spokeRecently = false;
-    }
 }
 var played_audio = {
     volume: 100,

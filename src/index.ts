@@ -99,8 +99,6 @@ function checkFocusWindow() {
 		window.speechSynthesis.pause();
 		window.speechSynthesis.cancel();
 		spokeRecently = true;
-	} else {
-		spokeRecently = false;
 	}
 }
 

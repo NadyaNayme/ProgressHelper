@@ -3479,7 +3479,7 @@ module.exports = __WEBPACK_EXTERNAL_MODULE_sharp__;
 /******/ 				var scripts = document.getElementsByTagName("script");
 /******/ 				if(scripts.length) {
 /******/ 					var i = scripts.length - 1;
-/******/ 					while (i > -1 && (!scriptUrl || !/^http(s?):/.test(scriptUrl))) scriptUrl = scripts[i--].src;
+/******/ 					while (i > -1 && !scriptUrl) scriptUrl = scripts[i--].src;
 /******/ 				}
 /******/ 			}
 /******/ 		}
@@ -3569,12 +3569,16 @@ function ttsSpeak() {
     ttsAlarm.text = 'Switch hammers';
     ttsAlarm.volume = played_audio.volume;
     window.speechSynthesis.cancel();
-    if (!spokeRecently && !alt1.rsActive) {
+    if (!spokeRecently) {
         window.speechSynthesis.speak(ttsAlarm);
         spokeRecently = true;
         setTimeout(function () {
             spokeRecently = false;
         }, 10000);
+    }
+    if (spokeRecently && alt1.rsActive) {
+        window.speechSynthesis.pause();
+        window.speechSynthesis.cancel();
     }
 }
 var lastKnownHeatBarposition;

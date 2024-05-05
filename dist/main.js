@@ -3576,10 +3576,6 @@ function ttsSpeak() {
             spokeRecently = false;
         }, 10000);
     }
-    if (spokeRecently && alt1.rsActive) {
-        window.speechSynthesis.pause();
-        window.speechSynthesis.cancel();
-    }
 }
 var lastKnownHeatBarposition;
 var lastKnownProgressBarPosition;
@@ -3612,13 +3608,6 @@ function tryFindProgressBar() {
     }
     return;
 }
-function checkFocusWindow() {
-    if (alt1.rsActive) {
-        window.speechSynthesis.pause();
-        window.speechSynthesis.cancel();
-        spokeRecently = true;
-    }
-}
 var played_audio = {
     volume: 100,
 };
@@ -3636,7 +3625,6 @@ function startApp() {
         return;
     }
     setInterval(tryFindProgressBar, 1000);
-    setInterval(checkFocusWindow, 500);
 }
 var settingsObject = {
     settingsHeader: _a1sauce__WEBPACK_IMPORTED_MODULE_0__.createHeading('h2', 'Settings'),

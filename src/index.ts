@@ -41,10 +41,6 @@ function ttsSpeak() {
 			spokeRecently = false;
 		}, 10000);
 	}
-	if (spokeRecently && alt1.rsActive) {
-		window.speechSynthesis.pause();
-		window.speechSynthesis.cancel();
-	}
 }
 
 
@@ -98,14 +94,6 @@ function tryFindProgressBar() {
 	return
 }
 
-function checkFocusWindow() {
-	if(alt1.rsActive) {
-		window.speechSynthesis.pause();
-		window.speechSynthesis.cancel();
-		spokeRecently = true;
-	}
-}
-
 let played_audio = {
 	volume: 100,
 }
@@ -134,7 +122,6 @@ export function startApp() {
 	}
 
 	setInterval(tryFindProgressBar, 1000);
-	setInterval(checkFocusWindow, 500);
 }
 
 const settingsObject = {

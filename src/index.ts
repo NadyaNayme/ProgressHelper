@@ -34,10 +34,12 @@ function ttsSpeak() {
 	ttsAlarm.text = 'Switch hammers';
 	ttsAlarm.volume = played_audio.volume;
 	window.speechSynthesis.cancel();
-	if (!spokeRecently) {
+	if (!spokeRecently && !alt1.rsActive) {
 		window.speechSynthesis.speak(ttsAlarm);
 		spokeRecently = true;
-		setTimeout(() => {spokeRecently = false}, 10000);
+		setTimeout(() => {
+			spokeRecently = false;
+		}, 10000);
 	}
 }
 

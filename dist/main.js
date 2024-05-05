@@ -3569,10 +3569,12 @@ function ttsSpeak() {
     ttsAlarm.text = 'Switch hammers';
     ttsAlarm.volume = played_audio.volume;
     window.speechSynthesis.cancel();
-    if (!spokeRecently) {
+    if (!spokeRecently && !alt1.rsActive) {
         window.speechSynthesis.speak(ttsAlarm);
         spokeRecently = true;
-        setTimeout(function () { spokeRecently = false; }, 10000);
+        setTimeout(function () {
+            spokeRecently = false;
+        }, 10000);
     }
 }
 var lastKnownHeatBarposition;
@@ -3606,6 +3608,16 @@ function tryFindProgressBar() {
     }
     return;
 }
+function checkFocusWindow() {
+    if (alt1.rsActive) {
+        window.speechSynthesis.pause();
+        window.speechSynthesis.cancel();
+        spokeRecently = true;
+    }
+    else {
+        spokeRecently = false;
+    }
+}
 var played_audio = {
     volume: 100,
 };
@@ -3623,6 +3635,7 @@ function startApp() {
         return;
     }
     setInterval(tryFindProgressBar, 1000);
+    setInterval(checkFocusWindow, 500);
 }
 var settingsObject = {
     settingsHeader: _a1sauce__WEBPACK_IMPORTED_MODULE_0__.createHeading('h2', 'Settings'),

@@ -33,8 +33,8 @@ function ttsSpeak() {
 	var ttsAlarm = new SpeechSynthesisUtterance();
 	ttsAlarm.text = 'Switch hammers';
 	ttsAlarm.volume = played_audio.volume;
-	window.speechSynthesis.cancel();
 	if (!spokeRecently) {
+		window.speechSynthesis.cancel();
 		window.speechSynthesis.speak(ttsAlarm);
 		spokeRecently = true;
 		setTimeout(() => {
@@ -168,9 +168,9 @@ window.onload = function () {
 		//tell alt1 about the app
 		//this makes alt1 show the add app button when running inside the embedded browser
 		//also updates app settings if they are changed
-		checkVersion('0.0.3');
+		checkVersion('0.0.4');
 		setInterval(() => {
-			checkVersion('0.0.3');
+			checkVersion('0.0.4');
 		}, 1000 * 60 * 2);
 
 		alt1.identifyAppUrl('./appconfig.json');

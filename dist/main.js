@@ -3574,7 +3574,7 @@ function ttsSpeak() {
         spokeRecently = true;
         setTimeout(function () {
             spokeRecently = false;
-        }, 10000);
+        }, 20000);
     }
 }
 var lastKnownHeatBarposition;
@@ -3666,9 +3666,9 @@ window.onload = function () {
         //tell alt1 about the app
         //this makes alt1 show the add app button when running inside the embedded browser
         //also updates app settings if they are changed
-        checkVersion('0.0.2');
+        checkVersion('0.0.3');
         setInterval(function () {
-            checkVersion('0.0.2');
+            checkVersion('0.0.3');
         }, 1000 * 60 * 2);
         alt1.identifyAppUrl('./appconfig.json');
         Object.values(settingsObject).forEach(function (val) {

@@ -39,7 +39,7 @@ function ttsSpeak() {
 		spokeRecently = true;
 		setTimeout(() => {
 			spokeRecently = false;
-		}, 10000);
+		}, 20000);
 	}
 }
 
@@ -168,9 +168,9 @@ window.onload = function () {
 		//tell alt1 about the app
 		//this makes alt1 show the add app button when running inside the embedded browser
 		//also updates app settings if they are changed
-		checkVersion('0.0.2');
+		checkVersion('0.0.3');
 		setInterval(() => {
-			checkVersion('0.0.2');
+			checkVersion('0.0.3');
 		}, 1000 * 60 * 2);
 
 		alt1.identifyAppUrl('./appconfig.json');

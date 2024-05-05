@@ -3562,6 +3562,7 @@ var helperItems = {
 var progressBars = alt1__WEBPACK_IMPORTED_MODULE_5__.webpackImages({
     heat_bar: __webpack_require__(/*! ./asset/data/heat_bar.data.png */ "./asset/data/heat_bar.data.png"),
 });
+var attempts = 0;
 var alerted = false;
 var lastValues = [44];
 function alertSwitchHammers() {
@@ -3574,6 +3575,13 @@ function alertSwitchHammers() {
 var lastKnownHeatBarposition;
 var lastKnownProgressBarPosition;
 function tryFindProgressBar() {
+    if (attempts == 8) {
+        lastKnownProgressBarPosition = undefined;
+        alt1.overLayClearGroup('ProgressBar');
+        alt1.overLaySetGroup('MustRestart');
+        alt1.overLayText('Must reset Progress Helper', alt1__WEBPACK_IMPORTED_MODULE_5__.mixColor(255, 255, 255), 20, 30, 30, 10000);
+        return;
+    }
     var client_screen = alt1__WEBPACK_IMPORTED_MODULE_5__.captureHoldFullRs();
     var startOfBar = {
         progressBar: client_screen.findSubimage(progressBars.heat_bar),
@@ -3589,11 +3597,15 @@ function tryFindProgressBar() {
         };
         lastKnownHeatBarposition = heatBarposition;
         lastKnownProgressBarPosition = progressBarPosition;
-        alt1.overLayClearGroup('ProgressBar');
+        attempts = 0;
     }
+    alt1.overLayClearGroup('ProgressBar');
     if (lastKnownProgressBarPosition === undefined) {
         setTimeout(function () {
-            tryFindProgressBar();
+            if (attempts <= 8) {
+                tryFindProgressBar();
+                attempts++;
+            }
         }, 1000);
     }
 }
@@ -3603,15 +3615,16 @@ function statusUpdate() {
     }
     var progressBar = alt1__WEBPACK_IMPORTED_MODULE_5__.captureHold(lastKnownProgressBarPosition.x - 3, lastKnownProgressBarPosition.y - 5, 56, 4)
         .read();
-    alt1.overLaySetGroup('ProgressBar');
-    alt1.overLayRect(alt1__WEBPACK_IMPORTED_MODULE_5__.mixColor(0, 255, 0), lastKnownProgressBarPosition.x - 3, lastKnownProgressBarPosition.y - 5, 56, 4, 3000, 1);
-    alt1.overLayRefreshGroup('ProgerssBar');
     if (lastValues.length > 5) {
+        alt1.overLayClearGroup('ProgressBar');
+        alt1.overLaySetGroup('ProgressBar');
+        alt1.overLayRect(alt1__WEBPACK_IMPORTED_MODULE_5__.mixColor(0, 255, 0), lastKnownProgressBarPosition.x - 3, lastKnownProgressBarPosition.y - 5, 56, 4, 3000, 1);
+        alt1.overLayRefreshGroup('ProgerssBar');
         lastValues.shift();
     }
-    console.log(lastValues);
     lastValues.push(progressBar.getPixel(44, 2)[0]);
     if (lastValues[0] == 147 && lastValues[4] == 147) {
+        alt1.overLayClearGroup('ProgressBar');
         alt1.overLaySetGroup('ProgressBar');
         alt1.overLayRect(alt1__WEBPACK_IMPORTED_MODULE_5__.mixColor(255, 0, 0), lastKnownProgressBarPosition.x - 3, lastKnownProgressBarPosition.y - 5, 56, 4, 3000, 1);
         alt1.overLayRefreshGroup('ProgerssBar');
@@ -3626,8 +3639,10 @@ function statusUpdate() {
     }
 }
 function checkProgressBar() {
-    if (!alerted && lastValues[0] !== 24 && lastValues[5] !== 24) {
-        console.log('Trying to find heat bar...');
+    if (!alerted &&
+        lastValues[0] !== 24 &&
+        lastValues[5] !== 24 &&
+        attempts <= 8) {
         tryFindProgressBar();
     }
 }
